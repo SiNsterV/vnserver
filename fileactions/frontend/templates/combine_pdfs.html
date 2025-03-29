@@ -1,0 +1,41 @@
+<!-- templates/combine_pdfs.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Combine PDFs | File Utility App</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Combine PDF Files</h1>
+            <p class="subtitle">Upload multiple PDF files to merge them into one</p>
+        </header>
+
+        <div class="tool-container">
+            <form id="combineForm" enctype="multipart/form-data">
+                <div class="file-upload-area" id="dropArea">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <p>Drag & drop PDF files here or click to browse</p>
+                    <input type="file" id="fileInput" name="files" accept=".pdf" multiple required>
+                </div>
+                <div id="fileList"></div>
+                <button type="submit" class="cta-button">Combine PDFs</button>
+            </form>
+            
+            <div id="progress" class="progress-container" style="display: none;">
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+                <p class="progress-text">Processing files...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/combine_pdfs.js"></script>
+</body>
+</html>
