@@ -24,7 +24,6 @@ async def home(request: Request):
 async def combine_pdfs_page(request: Request):
     return templates.TemplateResponse("combine_pdfs.html", {"request": request})
 
-# Example endpoint for combining PDFs
 @app.post("/api/combine-pdfs")
 async def combine_pdfs(files: list[UploadFile] = File(...)):
     if len(files) < 2:
@@ -49,6 +48,15 @@ async def combine_pdfs(files: list[UploadFile] = File(...)):
             filename="combined.pdf",
             media_type="application/pdf"
         )
+        
+@app.get("/ocr", response_class=HTMLResponse)
+async def ocr_page(request: Request):
+    return templates.TemplateResponse("ocr.html", {"request": request})
+
+@app.post("/api/ocr")
+async def ocr(file: UploadFile = File(...)):
+    # OCR logic would go here
+    return {"message": "OCR endpoint - implement logic"}
 
 # Add similar endpoints for other tools
 @app.post("/api/jpg-to-png")
