@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Split PDF | File Actions</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+  <a href="/" class="go-back-button cta-button">Go Back</a>
+    <style>
+        .tool-container {
+            background-color: var(--card-bg);
+            border-radius: 0.75rem;
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .file-upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 0.5rem;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--primary);
+            background-color: rgba(79, 70, 229, 0.05);
+        }
+
+        .range-inputs {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .range-inputs input[type="number"] {
+            width: 100px;
+            padding: 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+
+        #fileInfo {
+            display: none;
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: var(--background);
+            border-radius: 0.5rem;
+        }
+
+        #totalPages {
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+    </style>
+    <div class="container">
+      
+        <header>
+          
+            <h1>Split PDF</h1>
+            <p class="subtitle">Select pages to extract from your PDF file</p>
+        </header>
+        
+        <div class="tool-container">
+            <form id="splitForm">
+                <div class="file-upload-area" id="dropArea">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <p>Drop your PDF here or click to browse</p>
+                    <input type="file" id="fileInput" accept=".pdf" style="display: none;">
+                </div>
+
+                <div id="fileInfo">
+                    <div id="selectedFile" style="margin-bottom: 1rem; color: var(--text-secondary);"></div>
+                    <h3>Select Pages</h3>
+                    <div class="range-inputs">
+                        <input type="number" id="startPage" min="1" placeholder="From page">
+                        <span>to</span>
+                        <input type="number" id="endPage" min="1" placeholder="To page">
+                    </div>
+                    <p id="totalPages"></p>
+                </div>
+
+                <button type="submit" class="cta-button" style="margin-top: 1rem;">
+                    Split PDF
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('splitForm');
+            const dropArea = document.getElementById('dropArea');
+            const fileInput = document.getElementById('fileInput');
+            const fileInfo = document.getElementById('fileInfo');
+            const startPage = document.getElementById('startPage');
+            const endPage = document.getElementById('endPage');
+            const totalPages = document.getElementById('totalPages');
+
+            // Handle file drop
+            dropArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropArea.style.borderColor = 'var(--primary)';
+            });
+
+            dropArea.addEventListener('dragleave', () => {
+                dropArea.style.borderColor = 'var(--border)';
+            });
+
+            dropArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropArea.style.borderColor = 'var(--border)';
+                const file = e.dataTransfer.files[0];
+                if (file && file.type === 'application/pdf') {
+                    handleFile(file);
+                }
+            });
+
+            // Handle file selection
+            dropArea.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files[0]) {
+                    handleFile(fileInput.files[0]);
+                }
+            });
+
+            async function handleFile(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const response = await fetch('/api/split-pdf/info', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            document.getElementById('selectedFile').textContent = `Selected file: ${file.name}`;
+            totalPages.textContent = `Total pages: ${data.pages}`;
+            startPage.max = data.pages;
+            endPage.max = data.pages;
+            fileInfo.style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+
+            // Handle form submission
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                if (!fileInput.files[0]) {
+                    alert('Please select a PDF file');
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+                formData.append('start', startPage.value);
+                formData.append('end', endPage.value);
+
+                try {
+                    const response = await fetch('/api/split-pdf/split', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'split.pdf';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
